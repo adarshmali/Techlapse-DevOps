@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # Unique name of the Deployment instance
+  name: my-nodedb-app
+  labels:
+    app: nodedb-app
+spec:
+  # Specify the desired number of replicas
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nodedb-app
+  template:
+    metadata:
+      labels:
+        # Apply this label to Pods to match the selector
+        app: nodedb-app
+    spec:
+      containers:
+      - name: nodedb-app
+        # Container image to run
+        image: pilippaul/node-demo-app:02
+        ports:
+        - containerPort: 3000 # Expose application port
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+      - name: mongodb
+        # MongoDB container image
+        image: adarshmali/monggo:01
+        ports:
+        - containerPort: 27017 # Expose MongoDB port
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  # Unique key of the Service instance
+  name: service-my-nodedb-app
+spec:
+  ports:
+    # Accept traffic sent to port 80
+    - name: http
+      port: 8080
+      targetPort: 3000
+  selector:
+    # Loadbalance traffic across Pods matching
+    # this label selector
+    app: nodedb-app
+  # Create an HA proxy in the cloud provider
+  # with an External IP address - *Only supported
+  # by some cloud providers*
+  type: LoadBalancer
